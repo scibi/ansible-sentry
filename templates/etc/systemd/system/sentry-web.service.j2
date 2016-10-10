@@ -1,0 +1,31 @@
+# {{ ansible_managed }}
+
+[Unit]
+Description=Sentry main service
+After=network.target
+Requires=sentry-worker.service
+Requires=sentry-beat.service
+
+[Service]
+Type=simple
+User={{ sentry__user }}
+Group={{ sentry__group }}
+WorkingDirectory={{ sentry__root_path }}
+EnvironmentFile={{ sentry__root_path }}/env.d/*.conf
+ExecStart={{ sentry__venv_path }}/bin/sentry run web -b {{ sentry__bind_address }}:{{ sentry__bind_port }}
+
+#ExecReload=/bin/kill -s HUP $MAINPID
+#ExecStop=/bin/kill -s TERM $MAINPID
+#PrivateTmp=true
+
+#PIDFile={{ sentry__root_path }}/run/gunicorn.pid
+#ExecStart={{ sentry__venv_path }}/bin/gunicorn { django_app__wsgi_module }:application	\
+#	--name %i 						\
+#	--pid { django_app__run_path }/gunicorn.pid		\
+#	--workers 3 						\
+#	--bind=unix:{ django_app__run_path }/gunicorn.sock 	\
+#	--log-level=info					\
+#	--log-file=-
+
+[Install]
+WantedBy=multi-user.target

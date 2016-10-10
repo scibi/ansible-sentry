@@ -1,0 +1,80 @@
+---
+# defaults file for debops.sentry
+sentry__version: '8.8.0'
+
+sentry__user: 'sentry'
+sentry__group: 'sentry'
+
+sentry__database_name: 'sentry'
+sentry__database_user: 'sentry'
+
+sentry__dependencies: True
+
+sentry__database_server: "{{ ansible_local['postgresql'].server }}"
+sentry__database_port: "{{ ansible_local['postgresql'].port }}"
+
+sentry__database_password_path: "{{ secret + '/postgresql/' + ansible_local['postgresql'].delegate_to +
+                                    '/' + sentry__database_port + '/credentials/' +
+                                    sentry__database_user + '/password' }}"
+
+sentry__database_password: "{{ lookup('password', sentry__database_password_path + ' length=48') }}"
+
+sentry__root_path: '{{ ansible_local.root.app + "/sentry" }}'
+sentry__config_path: "{{ sentry__root_path + '/config' }}"
+sentry__venv_path: "{{ sentry__root_path + '/venv' }}"
+
+sentry__bind_address: '127.0.0.1'
+sentry__bind_port: '9002'
+
+sentry__domains: [ '{{ ansible_fqdn }}' ]
+
+
+# .. envvar:: sentry__cleanup_frequency
+#
+# Cleanup frequency (daily, weekly, monthly)
+sentry__cleanup_frequency: 'daily'
+
+# ------------------------------
+#   Custom redis configuration
+# ------------------------------
+
+# .. envvar:: sentry__redis_resque
+#
+# Connection string used in the configuration file
+sentry__redis_url: 'redis://{{ ((":" + sentry__redis_password + "@")
+                      if sentry__redis_password else "") +
+                    sentry__redis_host + ":" + sentry__redis_port }}'
+
+
+# .. envvar:: sentry__redis_host
+#
+# Define hostname of redis server to use
+sentry__redis_host: '{{ ansible_local.redis.host
+                       if (ansible_local|d() and ansible_local.redis|d() and
+                           ansible_local.redis.host|d())
+                       else "localhost" }}'
+
+
+# .. envvar:: sentry__redis_port
+#
+# Define port of redis server to use
+sentry__redis_port: '{{ ansible_local.redis.port
+                       if (ansible_local|d() and ansible_local.redis|d() and
+                           ansible_local.redis.port|d())
+                       else "6379" }}'
+
+
+# .. envvar:: sentry__redis_password
+#
+# Define the Redis authentication password to use
+sentry__redis_password: '{{ ansible_local.redis.password
+                           if (ansible_local|d() and ansible_local.redis|d() and
+                               ansible_local.redis.password|d())
+                           else "" }}'
+
+
+# .. envvar:: sentry__redis_database
+#
+# Specify which Redis database to use for Sentry
+sentry__redis_database: '0'
+

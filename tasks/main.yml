@@ -1,0 +1,73 @@
+---
+# tasks file for debops.sentry
+
+- name: Create directories
+  file:
+    path: '{{ item }}'
+    state: 'directory'
+    owner: '{{ sentry__user }}'
+    group: '{{ sentry__group }}'
+    mode: '0750'
+  with_items:
+    - '{{ sentry__config_path }}'
+    - '{{ sentry__root_path }}/run'
+
+- name: Install sentry configuration files
+  template:
+    src: 'app/config/{{ item }}.j2'
+    dest: '{{ sentry__config_path }}/{{ item }}'
+    owner: '{{ sentry__user }}'
+    group: '{{ sentry__group }}'
+    mode: '0640'
+  with_items:
+    - 'config.yml'
+    - 'sentry.conf.py'
+
+- name: Run migrations
+  shell: '. {{ sentry__root_path }}/bin/setup_environment.sh; sentry upgrade --lock --noinput'
+  args:
+    chdir: '{{ sentry__root_path }}'
+  become_user: '{{ sentry__user }}'
+  register: sentry__register_migrate
+  changed_when: sentry__register_migrate.stdout|match('.*Migrating forwards to.*')|bool
+  notify:
+    - 'Restart services'
+  tags: [ 'role::sentry:migrate' ]
+
+- name: sentry__register_migrate
+  debug:
+    msg: '{{ sentry__register_migrate }}'
+  tags: [ 'role::sentry:migrate' ]
+
+- name: Install custom systemd unit files
+  template:
+    src: 'etc/systemd/system/{{ item }}.service.j2'
+    dest: '/etc/systemd/system/{{ item }}.service'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  with_items: '{{ sentry__services }}'
+  register: sentry__register_install_systemd_service
+  notify:
+    - 'Reload systemd'
+    - 'Restart services'
+
+- name: Reload systemd
+  command: systemctl daemon-reload
+  when: sentry__register_install_systemd_service.changed
+
+- name: Enable systemd services
+  service:
+    name: '{{ item }}.service'
+    enabled: 'yes'
+    state: 'started'
+  with_items: '{{ sentry__services }}'
+
+- name: Configure periodical cleanup 
+  cron:
+    name: 'Remove old sentry data'
+    special_time: '{{ sentry__cleanup_frequency }}'
+    state: 'present'
+    user: '{{ sentry__user }}'
+    job: '. {{ sentry__root_path }}/bin/setup_environment.sh; sentry cleanup --days=30'
+    cron_file: 'sentry-cleanup'

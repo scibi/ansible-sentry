@@ -1,0 +1,55 @@
+---
+
+- name: Manage Sentry
+  hosts: [ 'debops_service_sentry' ]
+  become: True
+
+  environment: '{{ inventory__environment | d({})
+                   | combine(inventory__group_environment | d({}))
+                   | combine(inventory__host_environment  | d({})) }}'
+
+  roles:
+    - role: debops.sentry/env
+      tags: [ 'role::sentry', 'role::python_deploy', 'role::nginx' ]
+
+    - role: debops.python_deploy
+      python_deploy__type: 'pypi'
+      python_deploy__name: 'sentry'
+      python_deploy__user: '{{ sentry__user }}'
+      python_deploy__group: '{{ sentry__group }}'
+      python_deploy__version: '{{ sentry__version }}'
+      python_deploy__python: 'python2.7'
+      python_deploy__packages_dependent: '{{ sentry__packages }}'
+      python_deploy__root_path: '{{ sentry__root_path }}'
+      python_deploy__venv_path: '{{ sentry__venv_path }}'
+      python_deploy__environment:
+        SENTRY_CONF: '{{ sentry__config_path }}'
+      tags: [ 'role::python_deploy']
+  
+    - role: debops.nginx
+      nginx_servers: [ '{{ sentry__nginx_server }}' ]
+      nginx_upstreams: '{{ sentry__nginx_upstreams }}'
+      tags: [ 'role::nginx' ]
+  
+    - role: debops.postgresql
+      postgresql_roles:
+        - name: '{{ sentry__database_name }}' # Separate role is needed when sentry__database_name != sentry__database_user
+        - name: '{{ sentry__database_user }}' # Password is not passed directly - it will be read from the file
+      postgresql_groups:
+        - roles: [ '{{ sentry__database_user }}' ]
+          groups: [ '{{ sentry__database_name }}' ]
+          database: '{{ sentry__database_name }}'
+          enabled: '{{ sentry__database_name != sentry__database_user }}'
+      postgresql_databases:
+        - name: '{{ sentry__database_name }}'
+          owner: '{{ sentry__database_user }}'
+      when: '{{ sentry__dependencies }}'
+      tags: [ 'role::postgresql' ]
+  
+    - role: debops.redis
+      tags: [ 'role::redis' ]
+
+    - role: debops.sentry
+      tags: [ 'role::sentry' ]
+
+

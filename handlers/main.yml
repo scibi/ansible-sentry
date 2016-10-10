@@ -1,0 +1,11 @@
+---
+# handlers file for debops.sentry
+- name: Reload systemd
+  command: systemctl daemon-reload
+
+- name: Restart services
+  service:
+    name: '{{ item }}.service'
+    state: 'restarted'
+  with_items: '{{ sentry__services }}'
+

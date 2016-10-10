@@ -1,0 +1,39 @@
+---
+# vars file for debops.sentry
+sentry__packages:
+  - name: 'libpq-dev'
+  - name: 'libjpeg-dev'
+  - name: 'libxml2-dev'
+  - name: 'libxslt1-dev'
+  - name: 'libffi-dev'
+  - name: 'libpcre3-dev'
+
+sentry__services:
+  - 'sentry-web'
+  - 'sentry-worker'
+  - 'sentry-beat'
+
+sentry__nginx_upstreams:
+  - enabled: True
+    name: 'sentry'
+    server: '{{ sentry__bind_address }}:{{ sentry__bind_port }}'
+
+sentry__nginx_server:
+  by_role: 'debops.sentry'
+  enabled: True
+  name: '{{ sentry__domains }}'
+  type: 'proxy'
+  # keepalive + raven.js is a disaster
+  keepalive: 0
+  proxy_pass: 'http://sentry'
+  proxy_options: |
+    # use very aggressive timeouts
+    proxy_read_timeout 5s;
+    proxy_send_timeout 5s;
+    send_timeout 5s;
+    resolver_timeout 5s;
+    client_body_timeout 5s;
+
+    # buffer larger messages
+    client_max_body_size 5m;
+    client_body_buffer_size 100k;

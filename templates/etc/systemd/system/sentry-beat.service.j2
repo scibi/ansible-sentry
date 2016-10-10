@@ -1,0 +1,16 @@
+# {{ ansible_managed }}
+
+[Unit]
+Description=Sentry beat service
+After=network.target
+
+[Service]
+Type=simple
+User={{ sentry__user }}
+Group={{ sentry__group }}
+WorkingDirectory={{ sentry__root_path }}
+EnvironmentFile={{ sentry__root_path }}/env.d/*.conf
+ExecStart={{ sentry__venv_path }}/bin/sentry run cron
+
+[Install]
+WantedBy=multi-user.target
