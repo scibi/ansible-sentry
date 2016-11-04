@@ -28,6 +28,7 @@ sentry__bind_port: '9002'
 
 sentry__domains: [ '{{ ansible_fqdn }}' ]
 
+sentry__nginx_allow: []
 
 # .. envvar:: sentry__cleanup_frequency
 #
