@@ -1,6 +1,6 @@
 ---
 # defaults file for debops.sentry
-sentry__version: '8.8.0'
+sentry__version: '8.14.1'
 
 sentry__user: 'sentry'
 sentry__group: 'sentry'

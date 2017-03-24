@@ -25,6 +25,7 @@ sentry__nginx_server:
   type: 'proxy'
   # keepalive + raven.js is a disaster
   keepalive: 0
+  http_referrer_policy: 'same-origin'
   proxy_pass: 'http://sentry'
   proxy_options: |
     # use very aggressive timeouts

@@ -24,13 +24,14 @@
       python_deploy__venv_path: '{{ sentry__venv_path }}'
       python_deploy__environment:
         SENTRY_CONF: '{{ sentry__config_path }}'
+      python_deploy__upgrade_pip: True
       tags: [ 'role::python_deploy']
-  
+
     - role: debops.nginx
       nginx_servers: [ '{{ sentry__nginx_server }}' ]
       nginx_upstreams: '{{ sentry__nginx_upstreams }}'
       tags: [ 'role::nginx' ]
-  
+
     - role: debops.postgresql
       postgresql_roles:
         - name: '{{ sentry__database_name }}' # Separate role is needed when sentry__database_name != sentry__database_user
@@ -45,11 +46,9 @@
           owner: '{{ sentry__database_user }}'
       when: '{{ sentry__dependencies }}'
       tags: [ 'role::postgresql' ]
-  
+
     - role: debops.redis
       tags: [ 'role::redis' ]
 
     - role: debops.sentry
       tags: [ 'role::sentry' ]
-
-
