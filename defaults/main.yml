@@ -79,3 +79,7 @@ sentry__redis_password: '{{ ansible_local.redis.password
 # Specify which Redis database to use for Sentry
 sentry__redis_database: '0'
 
+# .. envvar:: sentry__default_time_zone
+#
+# Default time zone used by web interface
+sentry__default_time_zone: 'UTC'

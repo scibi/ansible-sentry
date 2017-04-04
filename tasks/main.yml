@@ -22,6 +22,8 @@
   with_items:
     - 'config.yml'
     - 'sentry.conf.py'
+  notify:
+    - 'Restart services'
 
 - name: Run migrations
   shell: '. {{ sentry__root_path }}/bin/setup_environment.sh; sentry upgrade --lock --noinput'
